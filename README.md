@@ -1,40 +1,49 @@
 Restaurant Review Intelligence System 🍽️📊
 An end-to-end, Aspect-Based Sentiment Analysis (ABSA) Streamlit application designed to extract fine-grained, actionable customer feedback from restaurant reviews.Instead of categorizing an entire review with a single overall label, this system splits complex customer feedback into distinct clauses and identifies sentiment across four core restaurant operational pillars: Food, Service, Ambience, and Price (plus a fallback General category).
+
 🔗 Live Application👉 Access the Deployed App on Streamlit Cloud✨ 
+
 Key Features📝 
 1. Single Review ModeAspect-Based Sentiment Extraction:
-Aspect-Based Sentiment Extraction: Parses complex review sentences into clauses and rates each aspect individually.
+   Aspect-Based Sentiment Extraction: Parses complex review sentences into clauses and rates each aspect individually.
+  
+   Confidence Scores: Visualizes confidence percentages alongside sentiment badges (🟢 Positive, 🔴 Negative, 🟡 Neutral).
+  
+   Overall Sentiment Score: Aggregates individual aspect sentiment ratings into a holistic rating for the review.
+  
+   Pre-loaded Examples: Includes sample review scenarios for immediate testing.
 
-Confidence Scores: Visualizes confidence percentages alongside sentiment badges (🟢 Positive, 🔴 Negative, 🟡 Neutral).
-
-Overall Sentiment Score: Aggregates individual aspect sentiment ratings into a holistic rating for the review.
-
-Pre-loaded Examples: Includes sample review scenarios for immediate testing.
-
-📈 2. Bulk Dashboard Mode
-Multi-Format Uploads: Supports batch processing of both CSV and PDF documents.
-
-Flexible Column Selection: Allows users to choose which column contains the review text.
-
-Real-time Analytics Engine:
-
-Key Operational Metrics: Total aspects extracted, positive/negative percentages, and neutral counts.
-
-Interactive Plotly Visualizations: Includes an Overall Sentiment Donut Chart and an Aspect-wise Grouped Bar Chart.
-
-Complaint Keyword Extraction: Uses custom stopword filtering to isolate recurring operational pain points (e.g., slow, cold, rude).
-
-Export Capabilities: Download processed aspect-level structured datasets directly as CSV files for downstream reporting.
+2. Bulk Dashboard Mode
+	  Multi-Format Uploads: Supports batch processing of both CSV and PDF documents.
+	  
+	  Flexible Column Selection: Allows users to choose which column contains the review text.
+	  
+	  Real-time Analytics Engine:
+	  
+	  Key Operational Metrics: Total aspects extracted, positive/negative percentages, and neutral counts.
+	  
+	  Interactive Plotly Visualizations: Includes an Overall Sentiment Donut Chart and an Aspect-wise Grouped Bar Chart.
+	  
+	  Complaint Keyword Extraction: Uses custom stopword filtering to isolate recurring operational pain points (e.g., slow, cold, rude).
+	  
+	  Export Capabilities: Download processed aspect-level structured datasets directly as CSV files for downstream reporting.
 
 🛠️ Tech Stack
-Frontend / Framework: Streamlit
-NLP & Data Processing: Python, Pandas, NumPy, spaCy (en_core_web_sm), NLTK, Regular Expressions (re)
-Machine Learning: Scikit-Learn (TF-IDF Vectorization, Logistic Regression / Sentiment Classifier)
-File Processing: pypdf (PDF extraction)
-Visualizations: Plotly Express
-Deployment: Streamlit Community Cloud
+
+	Frontend / Framework: Streamlit
+  
+	NLP & Data Processing: Python, Pandas, NumPy, spaCy (en_core_web_sm), NLTK, Regular Expressions (re)
+  
+	Machine Learning: Scikit-Learn (TF-IDF Vectorization, Logistic Regression / Sentiment Classifier)
+  
+	File Processing: pypdf (PDF extraction)
+  
+	Visualizations: Plotly Express
+  
+	Deployment: Streamlit Community Cloud
 
 Project Structure
+
 Restaurant-Review-Intelligence-System/
 │
 ├── data/
@@ -91,16 +100,27 @@ Open your browser at http://localhost:8501.
 Given a review like:"The paneer tikka was delicious and the ambience was beautiful, but the waiter took forever and the prices are too high."
 
 The system extracts and categorizes:
-Clause / KeywordTarget AspectExtracted Sentiment
-"paneer tikka was delicious" Food🟢 Positive
-"ambience was beautiful"Ambience🟢 Positive
-"waiter took forever"Service🔴 Negative
-"prices are too high"Price🔴 Negative☁️
+	Clause / KeywordTarget AspectExtracted Sentiment
+	
+	"paneer tikka was delicious" Food🟢 Positive
+	
+	"ambience was beautiful"Ambience🟢 Positive
+	
+	"waiter took forever"Service🔴 Negative
+	
+	"prices are too high"Price🔴 Negative☁️
 
 Deployment 
 This app is configured for seamless deployment on Streamlit Community Cloud:
+
 Fork or push changes to GitHub.
-Link the repository to share.streamlit.io.Set app.py as the main entry point.👩‍💻
+
+Link the repository to share.streamlit.io.
+
+Set app.py as the main entry point.👩‍💻
+
+
 Author Akanksha Meshram
 GitHub: @Akankshameshram29
+
 Live App: restaurant-review-intelligence-system-akanksha.streamlit.app
