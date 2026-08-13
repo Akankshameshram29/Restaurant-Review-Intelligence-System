@@ -9,7 +9,8 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
 
 # 1. MUST BE THE VERY FIRST STREAMLIT CALL
 st.set_page_config(
@@ -180,7 +181,6 @@ st.sidebar.info("💡 **Bulk Dashboard Mode** lets you analyze entire customer r
 
 #MODE 1: SINGLE REVIEW
 if mode == "📝 Single Review Mode":
-    st.markdown("Analyze individual restaurant reviews by aspect — **Food**, **Service**, **Ambience**, **Price**.")
     st.divider()
 
     examples = [
@@ -292,94 +292,149 @@ else:
             st.write(f"### Extracted {len(pdf_reviews)} Review Sentences from PDF")
             st.dataframe(df_raw.head(5), use_container_width=True)
 
-        # Run Analytics Engine button works uniformly for both CSV and PDF inputs
-        if df_raw is not None and st.button("🚀 Run Analytics Engine", type="primary", use_container_width=True):
-            with st.spinner("Analyzing aspects and classifying sentiments..."):
-                results_df = process_bulk_reviews(df_raw, text_col)
+        # Run Analytics Engine button
+        if df_raw is not None:
+            if st.button("🚀 Run Analytics Engine", type="primary", use_container_width=True, key="run_engine"):
+                with st.spinner("Analyzing aspects and classifying sentiments..."):
+                    results_df = process_bulk_reviews(df_raw, text_col)
 
-            st.success("Analysis Complete!")
-            st.divider()
+                st.success("Analysis Complete!")
+                st.divider()
 
-            # --- TOP METRICS ROW ---
-            m1, m2, m3, m4 = st.columns(4)
-            total_aspects = len(results_df)
-            pos_cnt = len(results_df[results_df['sentiment'] == 'positive'])
-            neg_cnt = len(results_df[results_df['sentiment'] == 'negative'])
-            neu_cnt = len(results_df[results_df['sentiment'] == 'neutral'])
+                # --- TOP METRICS ROW ---
+                m1, m2, m3, m4 = st.columns(4)
+                total_aspects = len(results_df)
+                pos_cnt = len(results_df[results_df['sentiment'] == 'positive'])
+                neg_cnt = len(results_df[results_df['sentiment'] == 'negative'])
+                neu_cnt = len(results_df[results_df['sentiment'] == 'neutral'])
 
-            m1.metric("Total Aspects Extracted", total_aspects)
-            m2.metric("Positive Mentions", pos_cnt, f"{round(pos_cnt/total_aspects*100, 1) if total_aspects else 0}%")
-            m3.metric("Negative Mentions", neg_cnt, f"-{round(neg_cnt/total_aspects*100, 1) if total_aspects else 0}%", delta_color="inverse")
-            m4.metric("Neutral Mentions", neu_cnt)
+                m1.metric("Total Aspects Extracted", total_aspects)
+                m2.metric("Positive Mentions", pos_cnt, f"{round(pos_cnt/total_aspects*100, 1) if total_aspects else 0}%")
+                m3.metric("Negative Mentions", neg_cnt, f"-{round(neg_cnt/total_aspects*100, 1) if total_aspects else 0}%", delta_color="inverse")
+                m4.metric("Neutral Mentions", neu_cnt)
 
-            st.divider()
+                st.divider()
 
-            # --- CHARTS ROW 1 ---
-            col_chart1, col_chart2 = st.columns(2)
+                # --- CHARTS ROW 1 ---
+                col_chart1, col_chart2 = st.columns(2)
 
-            with col_chart1:
-                st.subheader("🍩 Overall Sentiment Distribution")
-                sent_counts = results_df['sentiment'].value_counts().reset_index()
-                sent_counts.columns = ['Sentiment', 'Count']
-                
-                fig_pie = px.pie(
-                    sent_counts, 
-                    values='Count', 
-                    names='Sentiment',
-                    hole=0.4,
-                    color='Sentiment',
-                    color_discrete_map={'positive': '#2ecc71', 'negative': '#e74c3c', 'neutral': '#f1c40f'}
+                with col_chart1:
+                    st.subheader("🍩 Overall Sentiment Distribution")
+                    sent_counts = results_df['sentiment'].value_counts().reset_index()
+                    sent_counts.columns = ['Sentiment', 'Count']
+                    fig_pie = px.pie(
+                        sent_counts,
+                        values='Count',
+                        names='Sentiment',
+                        hole=0.4,
+                        color='Sentiment',
+                        color_discrete_map={'positive': '#2ecc71', 'negative': '#e74c3c', 'neutral': '#f1c40f'}
+                    )
+                    fig_pie.update_layout(margin=dict(t=20, b=20, l=20, r=20))
+                    st.plotly_chart(fig_pie, use_container_width=True)
+
+                with col_chart2:
+                    st.subheader("📊 Aspect-wise Breakdown")
+                    aspect_df = results_df.groupby(['aspect', 'sentiment']).size().reset_index(name='count')
+                    fig_bar = px.bar(
+                        aspect_df,
+                        x='aspect',
+                        y='count',
+                        color='sentiment',
+                        barmode='group',
+                        color_discrete_map={'positive': '#2ecc71', 'negative': '#e74c3c', 'neutral': '#f1c40f'}
+                    )
+                    fig_bar.update_layout(xaxis_title="Aspect", yaxis_title="Mention Count", margin=dict(t=20, b=20, l=20, r=20))
+                    st.plotly_chart(fig_bar, use_container_width=True)
+
+                st.divider()
+
+                # --- MOST PRAISED / COMPLAINED ---
+                col3, col4 = st.columns(2)
+
+                with col3:
+                    st.subheader("🏆 Most Praised Aspects")
+                    praised = results_df[results_df['sentiment'] == 'positive']['aspect'].value_counts().reset_index()
+                    praised.columns = ['Aspect', 'Count']
+                    fig_praised = px.bar(praised, x='Aspect', y='Count', color='Aspect',
+                                        color_discrete_sequence=px.colors.sequential.Greens_r)
+                    st.plotly_chart(fig_praised, use_container_width=True)
+
+                with col4:
+                    st.subheader("⚠️ Most Complained Aspects")
+                    complained = results_df[results_df['sentiment'] == 'negative']['aspect'].value_counts().reset_index()
+                    complained.columns = ['Aspect', 'Count']
+                    fig_complained = px.bar(complained, x='Aspect', y='Count', color='Aspect',
+                                           color_discrete_sequence=px.colors.sequential.Reds_r)
+                    st.plotly_chart(fig_complained, use_container_width=True)
+
+                st.divider()
+
+                # --- WORD CLOUD SECTION ---
+                col_wc1, col_wc2 = st.columns(2)
+
+                with col_wc1:
+                    st.subheader("☁️ Common Complaint Keywords")
+                    negative_text = ' '.join(
+                        results_df[results_df['sentiment'] == 'negative']['clause'].astype(str).tolist()
+                    )
+                    if negative_text.strip():
+                        wc_negative = WordCloud(
+                            width=600,
+                            height=300,
+                            background_color='white',
+                            colormap='Reds',
+                            max_words=50,
+                            stopwords=STOPWORDS,
+                            collocations=False
+                        ).generate(negative_text)
+                        fig_wc1, ax1 = plt.subplots(figsize=(8, 4))
+                        ax1.imshow(wc_negative, interpolation='bilinear')
+                        ax1.axis('off')
+                        plt.tight_layout(pad=0)
+                        st.pyplot(fig_wc1)
+                        plt.close()
+                    else:
+                        st.info("No negative reviews found to generate word cloud.")
+
+                with col_wc2:
+                    st.subheader("☁️ Common Praise Keywords")
+                    positive_text = ' '.join(
+                        results_df[results_df['sentiment'] == 'positive']['clause'].astype(str).tolist()
+                    )
+                    if positive_text.strip():
+                        wc_positive = WordCloud(
+                            width=600,
+                            height=300,
+                            background_color='white',
+                            colormap='Greens',
+                            max_words=50,
+                            stopwords=STOPWORDS,
+                            collocations=False
+                        ).generate(positive_text)
+                        fig_wc2, ax2 = plt.subplots(figsize=(8, 4))
+                        ax2.imshow(wc_positive, interpolation='bilinear')
+                        ax2.axis('off')
+                        plt.tight_layout(pad=0)
+                        st.pyplot(fig_wc2)
+                        plt.close()
+                    else:
+                        st.info("No positive reviews found to generate word cloud.")
+
+                st.divider()
+
+                # --- EXPORT SECTION ---
+                st.subheader("📥 Export Analyzed Dataset")
+                csv_buffer = io.StringIO()
+                results_df.to_csv(csv_buffer, index=False)
+                st.download_button(
+                    label="📥 Download Full Sentiment Report (CSV)",
+                    data=csv_buffer.getvalue(),
+                    file_name="restaurant_sentiment_report.csv",
+                    mime="text/csv",
+                    type="primary",
+                    key="download_csv"
                 )
-                fig_pie.update_layout(margin=dict(t=20, b=20, l=20, r=20))
-                st.plotly_chart(fig_pie, use_container_width=True)
-
-            with col_chart2:
-                st.subheader("📊 Aspect-wise Breakdown")
-                aspect_df = results_df.groupby(['aspect', 'sentiment']).size().reset_index(name='count')
-                
-                fig_bar = px.bar(
-                    aspect_df, 
-                    x='aspect', 
-                    y='count', 
-                    color='sentiment',
-                    barmode='group',
-                    color_discrete_map={'positive': '#2ecc71', 'negative': '#e74c3c', 'neutral': '#f1c40f'}
-                )
-                fig_bar.update_layout(xaxis_title="Aspect", yaxis_title="Mention Count", margin=dict(t=20, b=20, l=20, r=20))
-                st.plotly_chart(fig_bar, use_container_width=True)
-
-            # Add after CHARTS ROW 1
-            st.divider()
-            col3, col4 = st.columns(2)
-
-            with col3:
-              st.subheader("🏆 Most Praised Aspects")
-              praised = results_df[results_df['sentiment'] == 'positive']['aspect'].value_counts().reset_index()
-              praised.columns = ['Aspect', 'Count']
-              fig_praised = px.bar(praised, x='Aspect', y='Count', color='Aspect',
-                            color_discrete_sequence=px.colors.sequential.Greens_r)
-              st.plotly_chart(fig_praised, use_container_width=True)
-
-            with col4:
-              st.subheader("⚠️ Most Complained Aspects")
-              complained = results_df[results_df['sentiment'] == 'negative']['aspect'].value_counts().reset_index()
-              complained.columns = ['Aspect', 'Count']
-              fig_complained = px.bar(complained, x='Aspect', y='Count', color='Aspect',
-                            color_discrete_sequence=px.colors.sequential.Reds_r)
-              st.plotly_chart(fig_complained, use_container_width=True)
-
-            # --- EXPORT SECTION ---
-            st.subheader("📥 Export Analyzed Dataset")
-            csv_buffer = io.StringIO()
-            results_df.to_csv(csv_buffer, index=False)
-            
-            st.download_button(
-                label="📥 Download Full Sentiment Report (CSV)",
-                data=csv_buffer.getvalue(),
-                file_name="restaurant_sentiment_report.csv",
-                mime="text/csv",
-                type="primary"
-            )
 
 with st.sidebar:
     st.divider()
